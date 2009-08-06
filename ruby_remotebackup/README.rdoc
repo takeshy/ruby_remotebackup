@@ -1,0 +1,162 @@
+= remote_backup
+
+* http://net-ssh.rubyforge.org/remotebackup
+
+== DESCRIPTION:
+
+remote ssh backup is backup files on remote server with ssh. It's not required any program on remote server.Only download files which changed size or mday. And you can restore not only last version but also past version. 
+
+== FEATURES/PROBLEMS:
+* Transfer files or entire directory trees  from a remote host via SCP
+* Configurete server,path,user,password and ignore directory or files  by xml. 
+* remote_backup makes backup file tree information by yaml named yyyymmdd.yml in repository + backup name
+* restore_backup read backup file tree information and reconstruct from repository to outputdir.
+* Make backup file tree information when more than one files are changed on remote server from last backup.
+* Download  files  changed size or mday from last backup.
+* backup target are file,symbolic link and directory (not device,socket,pipe)
+* restore whichever version by specified backup file tree information.
+* Only Linux or BSD (not windows)
+
+
+== SYNOPSIS:
+
+In a nutshell:
+To use remotebackup,you should prepare backup configuretion by xml such below.
+<backups>
+	<backup>
+		<name>backup name</name>
+		<server>server name</server>
+		<user>login name</user>
+		<password>login password</password>
+		<path>path for backup</path>
+		<ignore_list>
+			<ignore>regular expression for not backup </ignore> 
+											:
+		</ignore_list>
+	</backup>
+				:
+</backups>
+
+/backups 
+	mandatory. root directory. It has children of backup informations
+/backups/backup
+	mandatory. unit of backup information
+/backups/backup/name
+	mandatory. backup information name
+/backups/backup/server
+	mandatory. remote host address.
+/backups/backup/user
+	mandatory.  login name to remote host .
+/backups/backup/password
+	mandatory.  login password to remote host .
+/backups/backup/path
+	mandatory.  path for begin to backup on remote host.
+/backups/backup/ignore_list
+	option.  parent of ignore entity.
+/backups/backup/ignore
+	option.  don't wish file or directory name under backup path.
+
+command:
+
+	remote_backup [-f filename] [-o output_dir] [-v verbos]
+
+
+	filename:
+		file name written backup information. if not specified default is ./backup.xml
+
+	output_dir:
+		repository directory.  if not specified default is .(current directory)
+		Backup file is stored and  backup file tree information yaml is maked in repository directory 
+		+ backup name.  
+
+	verbos
+		print progress to stdout  
+
+
+	restore_backup -f filename -o output directory [-v verbos]
+
+
+		filename:
+			backup file tree information yaml which locate repository directory + backup name + yyyy_mm_dd_hh_mm.yaml
+
+		output directory:
+			directory you want to make backup tree. 
+
+		verbos
+			print progress to stdout  
+
+== REQUIREMENTS:
+
+* Net::SSH 2
+* Net::SCP
+
+== INSTALL:
+
+* gem install remote-backup (might need sudo privileges)
+
+Or, you can do it the hard way (without Rubygems):
+
+* tar xzf net-backup-*.tgz
+* cd remote-backup-*
+* ruby setup.rb config
+* ruby setup.rb install (might need sudo privileges)
+
+== LICENSE:
+Ruby is copyrighted free software by Yukihiro Matsumoto <matz@netlab.co.jp>.
+You can redistribute it and/or modify it under either the terms of the GPL
+(see COPYING.txt file), or the conditions below:
+
+  1. You may make and give away verbatim copies of the source form of the
+     software without restriction, provided that you duplicate all of the
+     original copyright notices and associated disclaimers.
+
+  2. You may modify your copy of the software in any way, provided that
+     you do at least ONE of the following:
+
+       a) place your modifications in the Public Domain or otherwise
+          make them Freely Available, such as by posting said
+	  modifications to Usenet or an equivalent medium, or by allowing
+	  the author to include your modifications in the software.
+
+       b) use the modified software only within your corporation or
+          organization.
+
+       c) rename any non-standard executables so the names do not conflict
+	  with standard executables, which must also be provided.
+
+       d) make other distribution arrangements with the author.
+
+  3. You may distribute the software in object code or executable
+     form, provided that you do at least ONE of the following:
+
+       a) distribute the executables and library files of the software,
+	  together with instructions (in the manual page or equivalent)
+	  on where to get the original distribution.
+
+       b) accompany the distribution with the machine-readable source of
+	  the software.
+
+       c) give non-standard executables non-standard names, with
+          instructions on where to get the original software distribution.
+
+       d) make other distribution arrangements with the author.
+
+  4. You may modify and include the part of the software into any other
+     software (possibly commercial).  But some files in the distribution
+     are not written by the author, so that they are not under this terms.
+
+     They are gc.c(partly), utils.c(partly), regex.[ch], st.[ch] and some
+     files under the ./missing directory.  See each file for the copying
+     condition.
+
+  5. The scripts and library files supplied as input to or produced as 
+     output from the software do not automatically fall under the
+     copyright of the software, but belong to whomever generated them, 
+     and may be sold commercially, and may be aggregated with this
+     software.
+
+  6. THIS SOFTWARE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR
+     IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+     WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+     PURPOSE.
+

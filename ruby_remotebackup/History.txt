@@ -1,0 +1,11 @@
+== 0.50.1 2008-06-23
+
+* 1 major enhancement:
+  * Initial release
+
+== 0.50.2 2008-11-19
+
+*  bug modified such below:
+ * can't copy when file name includes space
+ * can't copy when much file in one directory
+

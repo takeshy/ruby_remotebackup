@@ -1,0 +1,56 @@
+#!/usr/bin/env ruby
+require 'rubygems'
+require "optparse"
+require 'logger'
+require 'remotebackup'
+
+$log = Logger.new(File.open("backup_error.log","w"))
+def msg_out(str)
+	if $verbose
+		puts str
+	end
+end
+def opt_parse()
+	begin 
+		parser = OptionParser.new do |opt|
+			opt.banner = "Usage: #{File.basename($0)} [Option]"
+			opt.on("-f","--file config",String,'location config file. default ./backup.xml') {|o|
+				$config_file = o
+			}
+			opt.on("-o","--outputdir Output Directory",String,"Directory for output. Default #{ENV['HOME']}") {|o|
+				$config_out_dir = o
+			}
+			opt.on("-v","--verbose","verbose message"){
+				$verbose = true 
+			}
+			opt.on("-h","--help","print this message and quit") {|o|
+				puts opt.help
+				exit 0
+			}
+			opt.parse!(ARGV)
+		end
+	rescue OptionParser::ParseError => err
+		$stderr.puts err.message
+		exit 1
+	end
+	unless $config_file 
+		$config_file = "./backup.xml"
+	end
+	unless $config_out_dir
+		$config_out_dir = "."
+	end
+    $config_out_dir = File::expand_path($config_out_dir)
+	if !File.file?($config_file)
+		$stderr.puts "config #{$config_file} is not exist."
+		$stderr.puts parser.help
+		exit 1
+	end
+	if !FileTest.directory?($config_out_dir)
+		$stderr.puts "output directory #{$config_out_dir} is not directory."
+		$stderr.puts parser.help
+		exit 1
+	end
+end
+opt_parse
+bk=Remotebackup::Backup.new($config_file,$config_out_dir)
+bk.start
