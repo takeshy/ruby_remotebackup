@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require 'rubygems'
 require "optparse"
+require "fileutils"
 require 'logger'
 require 'remotebackup'
 
@@ -14,7 +15,7 @@ def opt_parse()
 	begin 
 		parser = OptionParser.new do |opt|
 			opt.banner = "Usage: #{File.basename($0)} [Option]"
-			opt.on("-f","--file config",String,'location config file. default ./backup.xml') {|o|
+			opt.on("-f","--file config",String,'location config file. default ./backup.yml') {|o|
 				$config_file = o
 			}
 			opt.on("-o","--outputdir Output Directory",String,"Directory for output. Default #{ENV['HOME']}") {|o|
@@ -34,12 +35,13 @@ def opt_parse()
 		exit 1
 	end
 	unless $config_file 
-		$config_file = "./backup.xml"
+		$config_file = "./backup.yml"
 	end
 	unless $config_out_dir
 		$config_out_dir = "."
 	end
-    $config_out_dir = File::expand_path($config_out_dir)
+  $config_out_dir = File::expand_path($config_out_dir)
+  FileUtils.mkdir_p($config_out_dir)
 	if !File.file?($config_file)
 		$stderr.puts "config #{$config_file} is not exist."
 		$stderr.puts parser.help

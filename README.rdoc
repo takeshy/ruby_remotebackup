@@ -21,40 +21,36 @@ remote ssh backup is backup files on remote server with ssh. It's not required a
 == SYNOPSIS:
 
 In a nutshell:
-To use remotebackup,you should prepare backup configuretion by xml such below.
-<backups>
-	<backup>
-		<name>backup name</name>
-		<server>server name</server>
-		<user>login name</user>
-		<password>login password</password>
-		<path>path for backup</path>
-		<ignore_list>
-			<ignore>regular expression for not backup </ignore> 
-											:
-		</ignore_list>
-	</backup>
-				:
-</backups>
+To use remotebackup,you should prepare backup configuretion by yaml such below.
 
-/backups 
-	mandatory. root directory. It has children of backup informations
-/backups/backup
-	mandatory. unit of backup information
-/backups/backup/name
-	mandatory. backup information name
-/backups/backup/server
+name:
+  server: server_name
+  user: user
+  password:  password(option)
+  key: secret key path(option)
+  passphrase:  secret key passphrase(option)
+  path: path for backup
+  ignore_list:
+    - regular expression for not backup 
+                      :
+:
+
+name
+	mandatory. backup name
+server
 	mandatory. remote host address.
-/backups/backup/user
+user
 	mandatory.  login name to remote host .
-/backups/backup/password
-	mandatory.  login password to remote host .
-/backups/backup/path
+password
+	option.  login password to remote host .
+key
+	option.  private key path
+passphrase
+	option.  private key passphrase
+path
 	mandatory.  path for begin to backup on remote host.
-/backups/backup/ignore_list
+ignore_list
 	option.  parent of ignore entity.
-/backups/backup/ignore
-	option.  don't wish file or directory name under backup path.
 
 command:
 
@@ -62,7 +58,7 @@ command:
 
 
 	filename:
-		file name written backup information. if not specified default is ./backup.xml
+		file name written backup information. if not specified default is ./backup.yml
 
 	output_dir:
 		repository directory.  if not specified default is .(current directory)

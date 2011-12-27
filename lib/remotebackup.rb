@@ -1,97 +1,44 @@
-$:.unshift(File.dirname(__FILE__)) unless
-$:.include?(File.dirname(__FILE__)) || $:.include?(File.expand_path(File.dirname(__FILE__)))
 require 'rubygems'
 require 'net/ssh'
 require 'net/scp'
 require "stringio"
 require "fileutils"
-require "rexml/document"
 require "date"
 require 'logger'
 require 'yaml'
+require 'node'
 module Remotebackup
-  VERSION='0.51.1'
-  class Node
-    attr_accessor :ftype,:name,:makeMap
-    LS_FILE = /([-a-z]*)\s+(\d+)\s+(\S+)\s+(\S+)\s+(\d*)\s+([A-Z][a-z]*)\s+(\d+)\s+([\d:]*)\s+(.*)/
-      LS_LINK = /([-a-z]*)\s+(\d+)\s+(\S+)\s+(\S+)\s+(\d*)\s+([A-Z][a-z]*)\s+(\d+)\s+([\d:]*)\s+(.*)\s+->\s+(.*)/
-      Result = {:access=>0,:link_num=>1,:user=>2,:group=>3,:size=>4,:month=>5,:day=>6,:yt=>7,:name=>8,:arrow=>9,:source=>10}
-    Month = {"Jan" => 1, "Feb" => 2, "Mar" => 3, "Apr" => 4, "May" => 5, "Jun" => 6, "Jul" => 7, "Aug" => 8,
-              "Sep" => 9, "Oct" => 10, "Nov" => 11, "Dec" => 12}
-
-    def initialize(out)
-      if out =~ /[^\x20-\x7E]/
-        $log.error("#{out} includes irregular char. ignore.")
-        return
-      end
-      case out
-      when /^-/
-        if LS_FILE.match(out)
-          @name = $9
-          @ftype = :file
-          @size = $5.to_i
-          month = Month[$6]
-          day = $7.to_i
-          hour = 0
-          minute = 0
-          tmpTime = $8
-          if tmpTime =~ /(.*):(.*)/
-            year = DateTime.now.year
-            hour = $1.to_i
-            minute = $2.to_i
-          else
-            year = tmpTime.to_i
-          end
-          @date = DateTime.new(year,month,day,hour,minute).to_s
-          @makeMap = lambda{ return {"size" => @size, "date" => @date}}
-        else
-          $log.error("#{out} is not recognized. ignore.")
-        end
-      when /^l/
-        if LS_LINK.match(out)
-          @name = $9
-          @ftype = :symbolic
-          @source = $10
-          @makeMap = lambda{ return {"source" => @source}}
-        end
-      when /^d/
-        if LS_FILE.match(out)
-          @name = $9
-          @ftype = :directory
-        end
-      else
-        @ftype = :special
-        $log.error("#{out} is not regular file. ignore.")
-      end
-    end
-  end
   class BackupInfo
-    attr_accessor :fileMap,:mod,:last_file
-    def initialize(name,server,user,password,path,ignore_list)
+    attr_accessor :file_map,:mod,:last_file
+    def initialize(args)
       @mod = false
-      @name = name
-      @server = server
-      @user = user
-      @password = password
-      @path = path
-      @ignore_list = ignore_list
+      @name = args["name"] || args["server"]
+      @server = args["server"]
+      @user = args["user"]
+      @options = {}
+      @options[:port] = args["port"].to_i if args["port"]
+      @options[:password] = args["password"] if args["password"]
+      @options[:passphrase] = args["passphrase"] if args["passphrase"]
+      if args["key"]
+        @options[:keys] = [File.expand_path(args["key"])] 
+      end
+      @path = args["path"]
+      @ignore_list = args["ignore_list"] || []
       @nowTime = DateTime.now
-      @fileMap = {"file" => Hash.new,"symbolic" => Hash.new,"directory"=>Array.new}
-      Net::SSH.start(@server,@user,:password=>@password) { |session|
-        makeFileMapList(session,"")
+      @file_map = {"file" => Hash.new,"symbolic" => Hash.new,"directory"=>Array.new}
+      Net::SSH.start(@server,@user,@options) { |session|
+        make_file_map_list(session,"")
       }
     end
     def ignore_check(target)
-      if @ignore_list
-        @ignore_list.each do |ignore|
-          if target =~ /#{ignore}/
-            return false
-          end
+      @ignore_list.each do |ignore|
+        if target =~ /#{ignore}/
+          return false
         end
       end
       return true
     end
-    def makeFileMapList(session,target)
+    def make_file_map_list(session,target)
       if target != ""
         target_path = @path +"/"+target
       else
@@ -115,24 +62,22 @@ module Remotebackup
         return
       end
       lines = StringIO.new(out).readlines
-      if lines[0].split().length < 9
-        @fileMap["directory"].push target unless target == ""
+      if !Node.build(lines[0].chomp)
+        @file_map["directory"].push target unless target == ""
         makeFileMap(session,target,lines)
       else
-        node = Node.new(lines[0].chomp)
+        node = Node.build(lines[0].chomp)
         if node.ftype == :symbolic
-          @fileMap["symbolic"][File.basename(@path)] = node.makeMap.call
+          @file_map["symbolic"][File.basename(@path)] = node.make_map.call
         elsif node.ftype == :file
-          @fileMap["file"][File.basename(@path)] = node.makeMap.call
+          @file_map["file"][File.basename(@path)] = node.make_map.call
         end
       end
     end
     def makeFileMap(session,target,lines)
       lines.each do |line|
-        if line.split().length < 9
-          next
-        end
-        node = Node.new(line.chomp)
+        node = Node.build(line.chomp)
+        next unless node
         if  not node.name or node.name == "." or node.name == ".." 
           next
         end
@@ -146,13 +91,13 @@ module Remotebackup
         end
         case node.ftype
         when :directory
-          makeFileMapList(session,target_name)
+          make_file_map_list(session,target_name)
         when :special
           next
         when :file
-          @fileMap["file"][target_name] = node.makeMap.call
+          @file_map["file"][target_name] = node.make_map.call
         when :symbolic
-          @fileMap["symbolic"][target_name] = node.makeMap.call
+          @file_map["symbolic"][target_name] = node.make_map.call
         end
       end
     end
@@ -160,7 +105,7 @@ module Remotebackup
       output_dir = out_dir + "/" + @name
       f = output_dir + "/" + date_to_filename + ".yml"
       File.open(f,"w") do |f|
-        f.write YAML.dump(@fileMap)
+        f.write YAML.dump(@file_map)
       end
     end
     def cleanFileInfo()
@@ -183,32 +128,33 @@ module Remotebackup
     def differencial_copy(out_dir)
       output_dir = out_dir + "/" + @name
       FileUtils.mkdir_p(output_dir)
-      oldFileInfoMap = load_last_yaml(output_dir)
-      @fileMap["directory"].each do |dir|
-        unless oldFileInfoMap["directory"].include?(dir)
+      old_file_info_map = load_last_yaml(output_dir)
+      @file_map["directory"].each do |dir|
+        unless old_file_info_map["directory"].include?(dir)
           @mod = true
           msg_out "create directory:#{dir}"
           FileUtils.mkdir_p(output_dir + "/" + dir)
         end
       end
-      oldFileMap = oldFileInfoMap["symbolic"]
-      @fileMap["symbolic"].each do |key,val|
-        if !oldFileMap[key] || oldFileMap[key]["source"] != val["source"]
+      old_file_map = old_file_info_map["symbolic"]
+      @file_map["symbolic"].each do |key,val|
+        if !old_file_map[key] || old_file_map[key]["source"] != val["source"]
           @mod = true
-          if !oldFileMap[key]  
+          if !old_file_map[key]  
             msg_out "create symbolic:#{key}"
           else
             msg_out "modified symbolic:#{key}"
           end
         end
       end
-      oldFileMap = oldFileInfoMap["file"]
-      Net::SSH.start(@server, @user, :password => @password) do |ssh|
-        @fileMap["file"].each do |key,val|
-          if !oldFileMap[key] || oldFileMap[key]["date"] != val["date"] 
+      old_file_map = old_file_info_map["file"]
+      Net::SSH.start(@server, @user,@options) do |ssh|
+        @file_map["file"].each do |key,val|
+          key = key.dup.force_encoding("utf-8")
+          if !old_file_map[key] || old_file_map[key]["date"] != val["date"] 
             @mod = true
             file_name = output_dir + "/" + key + date_to_filename
-            orig = "#{@path}/#{key}".gsub(/ /,"\\ ").gsub(/\(/,"\\(").gsub(/\)/,"\\)").gsub(/&/,"\\\\&").gsub(/\=/,"\\=")
+            orig = "#{@path}/#{key}"
             msg_out "scp #{orig} #{file_name}"
             begin
               ssh.scp.download!(orig,file_name)
@@ -217,13 +163,13 @@ module Remotebackup
               next
             end
             val["file_name"] = file_name
-            if !oldFileMap[key]
+            if !old_file_map[key]
               msg_out "create file:#{key}"
             else
               msg_out "modified file:#{key}"
             end
           else
-            val["file_name"] = oldFileMap[key]["file_name"]
+            val["file_name"] = old_file_map[key]["file_name"]
           end
         end
       end
@@ -243,33 +189,15 @@ module Remotebackup
     def initialize(config_file,config_out_dir)
       @config_file = config_file
       @config_out_dir = config_out_dir
-      @doc = REXML::Document.new(File.open(@config_file))
-      @top = @doc.elements["/backups"]
+      @doc = YAML.load_file(@config_file)
       @conf_backups = Array.new
-      unless @top
-        oops("/backups is not set in #{@config_file}.")
-      end
-      @top.each_element do |backup|
-        bkup_info = Hash.new
-        backup.each_element do |elem|
-          if elem.name == "ignore_list"
-            ignores = Array.new
-            elem.each_element do |ignore|
-              if ignore.text
-                ignores.push(ignore.text)
-              end
-            end
-            bkup_info["ignore_list"] = ignores
-          else
-            bkup_info[elem.name] = elem.text
-          end
-        end
-        @conf_backups.push(bkup_info)
+      @doc.each do |key,val|
+        @conf_backups.push(val.merge(:name => key))
       end
     end
     def start
       @conf_backups.each do |conf|
-        bkup = BackupInfo.new(conf["name"],conf["server"],conf["user"],conf["password"],conf["path"],conf["ignore_list"])
+        bkup = BackupInfo.new(conf)
         msg_out "--------------------------------"
         msg_out "Backup start #{conf['name']}"
         msg_out "--------------------------------"

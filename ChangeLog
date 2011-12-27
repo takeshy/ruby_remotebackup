@@ -1,3 +1,10 @@
+== 0.70.0 
+*	build tool change to Jeweler
+*	change config file format xml to yaml
+*	accept debian system
+*	you can use utf-8 file name
+*	you can use key base authenticity
+
 == 0.50.1 2008-06-23
 
 * 1 major enhancement:

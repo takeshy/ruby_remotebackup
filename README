@@ -13,50 +13,39 @@ shellで下記のコマンドを実行
 
 バックアップ手順
 1. 下記のフォーマットでバックアップを行うための設定ファイルを作成します。
-<backups>
-  <backup>
-    <name>バックアップ名（適当な英数字)</name>
-    <server>ホスト名</server>
-    <user>ホストにログインできるユーザ名</user>
-    <password>ユーザのパスワード</password>
-    <path>バックアップしたいディレクトリのフルパス</path>
-    <ignore_list>
-      <ignore>無視したいディレクトリおよびファイルの正規表現</ignore>
+バックアップ名（適当な英数字):
+  server: ホスト名
+  user: ホストにログインできるユーザ名
+  password:  ユーザのパスワード
+  key:  秘密鍵のパス
+  passphrase:  秘密鍵のパスフレーズ
+  path: バックアップしたいディレクトリのフルパス</path>
+  ignore_list:
+    - 無視したいディレクトリおよびファイルの正規表現
                       :
-    　</ignore_list>
-  </backup>
-        :
-</backups>
+:
 
+例)サーバ192.168.0.10のホストにtakesyというユーザ（パスワードが openthesesami）で/www配下を.svnや.bkというディレクトリもしくはファイル以外をバックアップし、さらにサーバ192.168.0.12のホストにbkuserというユーザ（公開鍵認証）で/export配下をバックアップする場合。
+web:
+  server: 192.168.0.10
+  user: takesy
+  password: openthesesami 
+  path: /www
+  ignore_list:
+    - \.svn
+    - \.bk
 
-例)サーバ192.168.0.10のホストにtakesyというユーザ（パスワードが openthesesami）で/www配下を.svnや.bkというディレクトリもしくはファイル以外をバックアップし、さらにサーバ192.168.0.12のホストにbkuserというユーザ（パスワードが passforbkuser）で/export配下をバックアップする場合。
-<backups>
-    <backup>
-        <name>web</name>
-        <server>192.168.0.10</server>
-        <user>takesy</user>
-        <password>openthesesami</password>
-        <path>/www</path>
-        <ignore_list>
-            <ignore>\.svn</ignore>
-            <ignore>\.bk</ignore>
-        </ignore_list>
-    </backup>
-    <backup>
-        <name>nfs</name>
-        <server>192.168.0.12</server>
-        <user>bkuser</user>
-        <password>passforbkuser</password>
-        <path>/export</path>
-        <ignore_list/>
-    </backup>
-</backups>
+nfs:
+  server: 192.168.0.12
+  user: bkuser
+  key: /home/morita/.ssh/id_rsa
+  path: /export
 
 2. 下記のコマンドを実行することにより、バックアップ開始.
 
-remote_backup [-f 1.で作成した設定ファイル。デフォルトはbacup.xml] [-o 出力したいディレクトリ　デフォルトはカレントディレクトリ] [-v　どのファイルをコピーしているか等の情報を表示] 
+remote_backup [-f 1.で作成した設定ファイル。デフォルトはbacup.yml] [-o 出力したいディレクトリ　デフォルトはカレントディレクトリ] [-v　どのファイルをコピーしているか等の情報を表示] 
 
-上記実行により、レポジトリとしてカレントディレクトリもしくは-oで指定したディレクトリに１．で設定した<name>の名前でディレクトリが作成されます。 
+上記実行により、レポジトリとしてカレントディレクトリもしくは-oで指定したディレクトリに１．で設定したnameの名前でディレクトリが作成されます。 
 上記例だとwebとnfsという名前のディレクトリができます。
 バックアップされたファイルは、ファイル名＋バックアップ日時の名前で保存され、さらにファイル情報として、実行日時.ymlというバックアップしたファイルの属性等が記述されたファイルが作成されます。このファイルはリストアする時に使用します。
 また、前回のバックアップ時と比較して変更がなかった場合は作成されません。
