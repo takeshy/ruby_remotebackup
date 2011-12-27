@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = "remotebackup"
-  s.version = "0.70.0"
+  s.version = "0.70.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Takeshi Morita"]
@@ -30,7 +30,8 @@ Gem::Specification.new do |s|
     "bin/remote_backup",
     "bin/restore_backup",
     "lib/node.rb",
-    "lib/remotebackup.rb"
+    "lib/remotebackup.rb",
+    "remotebackup.gemspec"
   ]
   s.homepage = "http://github.com/takeshy/remotebackup"
   s.licenses = ["MIT"]

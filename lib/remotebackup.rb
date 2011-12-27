@@ -150,8 +150,8 @@ module Remotebackup
       old_file_map = old_file_info_map["file"]
       Net::SSH.start(@server, @user,@options) do |ssh|
         @file_map["file"].each do |key,val|
-          key = key.dup.force_encoding("utf-8")
-          if !old_file_map[key] || old_file_map[key]["date"] != val["date"] 
+          utf8_key = key.dup.force_encoding("utf-8")
+          if !old_file_map[utf8_key] || old_file_map[utf8_key]["date"] != val["date"] 
             @mod = true
             file_name = output_dir + "/" + key + date_to_filename
             orig = "#{@path}/#{key}"
@@ -163,18 +163,18 @@ module Remotebackup
               next
             end
             val["file_name"] = file_name
-            if !old_file_map[key]
+            if !old_file_map[utf8_key]
               msg_out "create file:#{key}"
             else
               msg_out "modified file:#{key}"
             end
           else
-            val["file_name"] = old_file_map[key]["file_name"]
+            val["file_name"] = old_file_map[utf8_key]["file_name"]
           end
         end
       end
     end
-    def zerosup(i)
+    def zeropadd(i)
       if i < 10
         "0" + i.to_s
       else
@@ -182,7 +182,7 @@ module Remotebackup
       end
     end
     def date_to_filename()
-      @nowTime.year.to_s + "_" + zerosup(@nowTime.month) + "_" + zerosup(@nowTime.day) + "_" + zerosup(@nowTime.hour) + "_" + zerosup(@nowTime.min) 
+      @nowTime.year.to_s + "_" + zeropadd(@nowTime.month) + "_" + zeropadd(@nowTime.day) + "_" + zeropadd(@nowTime.hour) + "_" + zeropadd(@nowTime.min) 
     end
   end
   class Backup
