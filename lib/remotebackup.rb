@@ -150,7 +150,7 @@ module Remotebackup
       old_file_map = old_file_info_map["file"]
       Net::SSH.start(@server, @user,@options) do |ssh|
         @file_map["file"].each do |key,val|
-          utf8_key = key.dup.force_encoding("utf-8")
+          utf8_key = key.dup.force_encoding("utf-8") if key.respond_to?(:force_encoding)
           if !old_file_map[utf8_key] || old_file_map[utf8_key]["date"] != val["date"] 
             @mod = true
             file_name = output_dir + "/" + key + date_to_filename

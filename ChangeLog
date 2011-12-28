@@ -1,3 +1,6 @@
+== 0.70.2
+* for 1.8.7
+
 == 0.70.1
 * modify scp error when file name include non ascii char.
 
