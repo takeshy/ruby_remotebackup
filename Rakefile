@@ -15,7 +15,7 @@ require 'jeweler'
 Jeweler::Tasks.new do |gem|
   # gem is a Gem::Specification... see http://docs.rubygems.org/read/chapter/20 for more options
   gem.name = "remotebackup"
-  gem.homepage = "http://github.com/takeshy/remotebackup"
+  gem.homepage = "http://github.com/takeshy/ruby_remotebackup"
   gem.license = "MIT"
   gem.summary = %Q{version backup tool using scp.}
   gem.description = %Q{version backup tool using scp.}
