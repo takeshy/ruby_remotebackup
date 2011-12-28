@@ -36,31 +36,31 @@ name:
                       :
 :
   
-  name:
-  	mandatory. backup name
-  
-  server:
-  	mandatory. remote host address.
-  
-  user:
-  	mandatory.  login name to remote host .
-  
-  password:
-  	option.  login password to remote host .
-  
-  port:
-    option. ssh port number.
-  
-  key:
-  	option.  private key path
-  
-  passphrase:
-  	option.  private key passphrase
-  
-  path:
-  	mandatory.  path for begin to backup on remote host.
-  
-  ignore_list:
+name:
+	mandatory. backup name
+
+server:
+	mandatory. remote host address.
+
+user:
+	mandatory.  login name to remote host .
+
+password:
+	option.  login password to remote host .
+
+port:
+  option. ssh port number.
+
+key:
+	option.  private key path
+
+passphrase:
+	option.  private key passphrase
+
+path:
+	mandatory.  path for begin to backup on remote host.
+
+ignore_list:
 	option.  parent of ignore entity.
 
 command:
