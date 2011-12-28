@@ -49,7 +49,7 @@ password:
 	option.  login password to remote host .
 
 port:
-  option. ssh port number.
+	option. ssh port number.
 
 key:
 	option.  private key path
