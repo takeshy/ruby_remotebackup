@@ -27,6 +27,7 @@ name:
   server: server_name
   user: user
   password:  password(option)
+  port:  port number(option)
   key: secret key path(option)
   passphrase:  secret key passphrase(option)
   path: path for backup
@@ -43,6 +44,8 @@ user
 	mandatory.  login name to remote host .
 password
 	option.  login password to remote host .
+port
+  option. ssh port number.
 key
 	option.  private key path
 passphrase

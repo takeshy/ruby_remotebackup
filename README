@@ -16,6 +16,7 @@ shellで下記のコマンドを実行
 バックアップ名（適当な英数字):
   server: ホスト名
   user: ホストにログインできるユーザ名
+  port: ポート番号
   password:  ユーザのパスワード
   key:  秘密鍵のパス
   passphrase:  秘密鍵のパスフレーズ
@@ -30,6 +31,7 @@ web:
   server: 192.168.0.10
   user: takesy
   password: openthesesami 
+  port: 10022
   path: /www
   ignore_list:
     - \.svn
